@@ -1,63 +1,38 @@
-import { getAppAsync, ensureAuth } from "./cloudbase";
 import type { Meal } from "./mock-data";
 
-const COLLECTION = "meals";
-
-async function db() {
-  const app = await getAppAsync();
-  return app.database();
+async function readError(res: Response, fallback: string) {
+  const data = (await res.json().catch(() => null)) as {
+    error?: string;
+  } | null;
+  return new Error(data?.error ?? fallback);
 }
 
 /** 新增一顿饭，返回文档 ID */
 export async function addMealToDB(
   meal: Omit<Meal, "id">,
 ): Promise<string> {
-  await ensureAuth();
-  const d = await db();
-  const res = await d.collection(COLLECTION).add({
-    ...meal,
-    createdAt: Date.now(),
+  const res = await fetch("/api/meals", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(meal),
   });
-  return res.id as string;
+  if (!res.ok) throw await readError(res, "写入失败");
+  const data = (await res.json()) as { id: string };
+  return data.id;
 }
 
 /** 读取最近的 N 顿，默认 50 */
 export async function getMeals(limit = 50): Promise<Meal[]> {
-  await ensureAuth();
-  const d = await db();
-  const res = await d
-    .collection(COLLECTION)
-    .orderBy("day", "desc")
-    .orderBy("time", "desc")
-    .limit(limit)
-    .get();
-  return (res.data as Record<string, unknown>[]).map(docToMeal);
+  const res = await fetch(`/api/meals?limit=${limit}`);
+  if (!res.ok) throw await readError(res, "读取失败");
+  const data = (await res.json()) as { meals: Meal[] };
+  return data.meals;
 }
 
 /** 按日期查 */
 export async function getMealsByDate(date: string): Promise<Meal[]> {
-  await ensureAuth();
-  const d = await db();
-  const res = await d
-    .collection(COLLECTION)
-    .where({ day: date })
-    .orderBy("time", "desc")
-    .get();
-  return (res.data as Record<string, unknown>[]).map(docToMeal);
-}
-
-/** CloudBase 文档 → Meal 类型 */
-function docToMeal(doc: Record<string, unknown>): Meal {
-  return {
-    id: (doc._id as string) ?? (doc.id as string),
-    day: doc.day as string,
-    time: doc.time as string,
-    who: doc.who as Meal["who"],
-    dish: doc.dish as string,
-    place: doc.place as string,
-    tag: doc.tag as Meal["tag"],
-    note: doc.note as string | undefined,
-    photo: doc.photo as string | undefined,
-    photoUrl: doc.photoUrl as string | undefined,
-  };
+  const res = await fetch(`/api/meals?day=${date}`);
+  if (!res.ok) throw await readError(res, "读取失败");
+  const data = (await res.json()) as { meals: Meal[] };
+  return data.meals;
 }

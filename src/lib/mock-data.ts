@@ -34,6 +34,8 @@ export interface Meal {
   tag?: MealTag;
   note?: string;
   photo?: string;
+  /** CloudBase Storage 文件 ID，用于刷新时重新换临时 URL */
+  photoFileId?: string;
   /** 真实照片 ObjectURL（来自记录 modal 上传的图） */
   photoUrl?: string;
 }
@@ -289,4 +291,3 @@ export const TAG_META: Record<MealTag, { bg: string; fg: string }> = {
   外卖: { bg: "#DDD0C5", fg: "#4F3F30" },
   出差: { bg: "#DAD3DD", fg: "#4A4252" },
 };
-

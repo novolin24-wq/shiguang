@@ -12,7 +12,7 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 import { MEALS, TODAY, type Meal } from "@/lib/mock-data";
 import { addMealToDB, getMeals } from "@/lib/db";
-import { uploadMealPhoto, getFileUrl } from "@/lib/storage";
+import { uploadMealPhoto } from "@/lib/storage";
 
 interface TimelineCtx {
   meals: Meal[];
@@ -110,6 +110,7 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
         tag: input.tag,
         note: input.note,
         photo: input.photo,
+        photoFileId: input.photoFileId,
         photoUrl: input.photoUrl,
       };
       setMeals((prev) => [newMeal, ...prev]);
@@ -128,11 +129,13 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
       (async () => {
         try {
           let photoUrl = input.photoUrl;
+          let photoFileId = input.photoFileId;
 
           // 有原始 File 则上传
           if (input.photoFile) {
-            const fileID = await uploadMealPhoto(input.photoFile);
-            photoUrl = await getFileUrl(fileID);
+            const uploaded = await uploadMealPhoto(input.photoFile);
+            photoFileId = uploaded.fileID;
+            photoUrl = uploaded.tempFileURL;
           }
 
           const dbId = await addMealToDB({
@@ -144,13 +147,14 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
             tag: input.tag,
             note: input.note,
             photo: input.photo,
+            photoFileId,
             photoUrl,
           });
 
           // 用数据库返回的真实 ID 替换临时 ID
           setMeals((prev) =>
             prev.map((m) =>
-              m.id === tempId ? { ...m, id: dbId, photoUrl } : m,
+              m.id === tempId ? { ...m, id: dbId, photoFileId, photoUrl } : m,
             ),
           );
           showToast("已记入云端");
