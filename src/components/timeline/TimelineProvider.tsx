@@ -35,6 +35,9 @@ const Ctx = createContext<TimelineCtx | null>(null);
 function getCloudbaseToast(error: unknown) {
   const text =
     error instanceof Error ? error.message : JSON.stringify(error ?? "");
+  if (text.includes("图片")) {
+    return text;
+  }
   if (text.includes("匿名登录") || text.includes("signInAnonymously")) {
     return "云端没记上：请先开启匿名登录";
   }

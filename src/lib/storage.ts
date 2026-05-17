@@ -1,3 +1,5 @@
+import { prepareMealPhotoForUpload } from "./image-upload";
+
 /**
  * 上传一张餐食照片到 CloudBase Storage
  * 返回 CloudBase 文件 ID 和可直接展示的临时 URL
@@ -8,8 +10,9 @@ export interface MealPhotoUpload {
 }
 
 export async function uploadMealPhoto(file: File): Promise<MealPhotoUpload> {
+  const uploadFile = await prepareMealPhotoForUpload(file);
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", uploadFile);
 
   const res = await fetch("/api/meal-photo", {
     method: "POST",

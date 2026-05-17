@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { IMAGE_UPLOAD_LIMITS, formatImageSize } from "@/lib/image-upload";
 
 export const runtime = "nodejs";
 
@@ -40,6 +41,19 @@ export async function POST(request: Request) {
     const file = formData.get("file");
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "缺少图片文件" }, { status: 400 });
+    }
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json({ error: "只能上传图片" }, { status: 400 });
+    }
+    if (file.size > IMAGE_UPLOAD_LIMITS.maxUploadBytes) {
+      return NextResponse.json(
+        {
+          error: `图片超过 ${formatImageSize(
+            IMAGE_UPLOAD_LIMITS.maxUploadBytes,
+          )}，请先压缩后再上传`,
+        },
+        { status: 413 },
+      );
     }
 
     await ensureAuth();
