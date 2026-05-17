@@ -1,26 +1,166 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────
+   食光 · 设计 tokens
+   source of truth: design/shiguang-demo.html
+   ───────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 背景 */
+  --bg: #F5EFE4;
+  --bg-card: #FDFAF3;
+  --bg-card-hover: #FAF5EA;
+  --paper: #FFFEFA;
+
+  /* 桌面端外侧（模拟手机壳的深色环境） */
+  --stage: #1F1A14;
+  --stage-soft: #2A231B;
+
+  /* 墨色 */
+  --ink: #2E2419;
+  --ink-soft: #5C4A38;
+  --ink-faded: #8B7355;
+
+  /* 强调 · 陶土橙 */
+  --accent: #B8694A;
+  --accent-soft: #D4A06B;
+  --accent-paper: #F0E4D2;
+
+  /* 分隔 */
+  --divider: #E8DDC9;
+
+  /* 阴影 */
+  --shadow-soft: 0 1px 2px rgba(46, 36, 25, 0.04), 0 4px 12px rgba(46, 36, 25, 0.06);
+  --shadow-warm: 0 2px 8px rgba(184, 105, 74, 0.08), 0 8px 24px rgba(184, 105, 74, 0.06);
+
+  /* 「她记的」/ 「爸妈」/ 「同事」/ 「朋友」dot 色 · 来自 components.jsx */
+  --who-alone: #B6A78F;
+  --who-together: #B95A2C;
+  --who-her: #B95A2C;
+  --who-parents: #5E6B3E;
+  --who-colleague: #5C6B7A;
+  --who-friend: #7A3B3F;
 }
 
+/* ─────────────────────────────────────────────
+   Tailwind v4 token 映射 · 等同 v3 的 extend
+   ───────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-bg-card: var(--bg-card);
+  --color-bg-card-hover: var(--bg-card-hover);
+  --color-paper: var(--paper);
+
+  --color-stage: var(--stage);
+  --color-stage-soft: var(--stage-soft);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faded: var(--ink-faded);
+
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-paper: var(--accent-paper);
+
+  --color-divider: var(--divider);
+
+  --color-who-alone: var(--who-alone);
+  --color-who-together: var(--who-together);
+  --color-who-her: var(--who-her);
+  --color-who-parents: var(--who-parents);
+  --color-who-colleague: var(--who-colleague);
+  --color-who-friend: var(--who-friend);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-warm: var(--shadow-warm);
+
+  --font-serif: var(--font-noto-serif-sc), var(--font-cormorant), "Songti SC", "Cormorant Garamond", serif;
+  --font-sans: var(--font-noto-sans-sc), "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-cormorant: var(--font-cormorant), "Cormorant Garamond", serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: var(--stage);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--accent-paper);
+  color: var(--ink);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* AI 识别中的扫描光带 · 从上到下匀速来回 */
+@keyframes sweep {
+  0% {
+    transform: translateY(-100%);
+  }
+  50% {
+    transform: translateY(280%);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
+}
+
+/* AI 识别中的三个点 · 错位 pulse */
+@keyframes scanDot {
+  0%, 100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* modal backdrop · 淡入 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 新卡片高亮 · 陶土光晕 1 秒 */
+@keyframes justSaved {
+  0% {
+    box-shadow: 0 0 0 0 rgba(184, 105, 74, 0);
+    background: var(--accent-paper);
+  }
+  20% {
+    box-shadow: 0 0 0 6px rgba(184, 105, 74, 0.15);
+    background: var(--accent-paper);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(184, 105, 74, 0);
+    background: transparent;
+  }
 }
