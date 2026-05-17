@@ -32,6 +32,18 @@ interface TimelineCtx {
 
 const Ctx = createContext<TimelineCtx | null>(null);
 
+function getCloudbaseToast(error: unknown) {
+  const text =
+    error instanceof Error ? error.message : JSON.stringify(error ?? "");
+  if (text.includes("匿名登录") || text.includes("signInAnonymously")) {
+    return "云端没记上：请先开启匿名登录";
+  }
+  if (text.includes("collection") || text.includes("meals")) {
+    return "云端没记上：请检查 meals 集合";
+  }
+  return "云端没记上，请稍后再试";
+}
+
 export function useTimeline() {
   const v = useContext(Ctx);
   if (!v) throw new Error("useTimeline must be used inside <TimelineProvider>");
@@ -51,6 +63,12 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
 
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToast = useCallback((message: string, duration = 2200) => {
+    setToast(message);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), duration);
+  }, []);
 
   // 启动时尝试从数据库加载，失败则静默使用 mock
   useEffect(() => {
@@ -104,9 +122,7 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
       if (highlightTimer.current) clearTimeout(highlightTimer.current);
       highlightTimer.current = setTimeout(() => setHighlightedId(null), 1100);
 
-      setToast("已记入今天");
-      if (toastTimer.current) clearTimeout(toastTimer.current);
-      toastTimer.current = setTimeout(() => setToast(null), 2200);
+      showToast("正在记入云端…", 2800);
 
       // 后台异步：上传照片 → 写入数据库 → 用真实数据替换临时记录
       (async () => {
@@ -119,10 +135,15 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
             photoUrl = await getFileUrl(fileID);
           }
 
-          const { photoFile: _, ...mealData } = input;
           const dbId = await addMealToDB({
-            ...mealData,
             day,
+            time: input.time,
+            who: input.who,
+            dish: input.dish,
+            place: input.place,
+            tag: input.tag,
+            note: input.note,
+            photo: input.photo,
             photoUrl,
           });
 
@@ -132,13 +153,15 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
               m.id === tempId ? { ...m, id: dbId, photoUrl } : m,
             ),
           );
-        } catch {
-          // 写库失败 → 本地数据保留，用户不会丢数据感知
-          // 下次刷新时 mock 兜底
+          showToast("已记入云端");
+        } catch (error) {
+          console.error("CloudBase save failed", error);
+          showToast(getCloudbaseToast(error), 4200);
+          // 写库失败时保留本地卡片，避免用户刚填的内容立刻丢失。
         }
       })();
     },
-    [pathname, router],
+    [pathname, router, showToast],
   );
 
   const value = useMemo<TimelineCtx>(

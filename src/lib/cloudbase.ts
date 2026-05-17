@@ -25,7 +25,7 @@ let authReady: Promise<void> | null = null;
 /** 确保匿名登录完成，整个应用只调一次 */
 export function ensureAuth(): Promise<void> {
   if (authReady) return authReady;
-  authReady = (async () => {
+  const loginPromise = (async () => {
     const app = await getAppAsync();
     const auth = app.auth();
     const loginState = await auth.getLoginState();
@@ -33,5 +33,9 @@ export function ensureAuth(): Promise<void> {
       await auth.signInAnonymously();
     }
   })();
+  authReady = loginPromise.catch((error) => {
+    authReady = null;
+    throw error;
+  });
   return authReady;
 }
