@@ -387,6 +387,7 @@ function RecordModalInner() {
 
   const [stage, setStage] = useState<Stage>(1);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [form, setForm] = useState<ConfirmForm>(() => {
     const t = nowHHmm();
     return {
@@ -420,6 +421,7 @@ function RecordModalInner() {
   const onPicked = useCallback((file: File) => {
     const url = URL.createObjectURL(file);
     setPhotoUrl(url);
+    setPhotoFile(file);
     setStage(2);
     // 模拟 AI 识别 2 秒
     setTimeout(() => {
@@ -436,10 +438,12 @@ function RecordModalInner() {
       place: form.place,
       note: form.note.trim() || undefined,
       photoUrl: photoUrl ?? undefined,
+      photoFile: photoFile ?? undefined,
     });
     // 把 blob 交给卡片去显示，自己清空引用以免卸载时 revoke
     setPhotoUrl(null);
-  }, [addMeal, form, photoUrl]);
+    setPhotoFile(null);
+  }, [addMeal, form, photoUrl, photoFile]);
 
   return (
     <div
