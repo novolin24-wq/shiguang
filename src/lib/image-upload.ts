@@ -3,6 +3,8 @@ export const IMAGE_UPLOAD_LIMITS = {
   maxUploadBytes: 4 * 1024 * 1024,
   targetBytes: 2 * 1024 * 1024,
   maxEdge: 1600,
+  previewMaxEdge: 720,
+  previewQuality: 0.68,
   minQuality: 0.55 as number,
   maxQuality: 0.86 as number,
   outputType: "image/jpeg",
@@ -131,4 +133,37 @@ export async function prepareMealPhotoForUpload(file: File): Promise<File> {
     type: IMAGE_UPLOAD_LIMITS.outputType,
     lastModified: Date.now(),
   });
+}
+
+export async function createMealPhotoDisplayUrl(file: File): Promise<string> {
+  if (!isRasterPhoto(file)) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("图片读取失败，请换一张照片"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const img = await loadImage(file);
+  const scale = Math.min(
+    1,
+    IMAGE_UPLOAD_LIMITS.previewMaxEdge /
+      Math.max(img.naturalWidth, img.naturalHeight),
+  );
+  const width = Math.max(1, Math.round(img.naturalWidth * scale));
+  const height = Math.max(1, Math.round(img.naturalHeight * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("图片读取失败，请换一张照片");
+  ctx.drawImage(img, 0, 0, width, height);
+
+  return canvas.toDataURL(
+    IMAGE_UPLOAD_LIMITS.outputType,
+    IMAGE_UPLOAD_LIMITS.previewQuality,
+  );
 }

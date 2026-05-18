@@ -13,6 +13,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { MEALS, TODAY, type Meal } from "@/lib/mock-data";
 import { addMealToDB, getMeals } from "@/lib/db";
 import { uploadMealPhoto } from "@/lib/storage";
+import { createMealPhotoDisplayUrl } from "@/lib/image-upload";
 
 interface TimelineCtx {
   meals: Meal[];
@@ -136,9 +137,9 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
 
           // 有原始 File 则上传
           if (input.photoFile) {
+            photoUrl = await createMealPhotoDisplayUrl(input.photoFile);
             const uploaded = await uploadMealPhoto(input.photoFile);
             photoFileId = uploaded.fileID;
-            photoUrl = uploaded.tempFileURL;
           }
 
           const dbId = await addMealToDB({

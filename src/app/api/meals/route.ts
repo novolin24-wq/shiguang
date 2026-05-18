@@ -55,6 +55,7 @@ function docToMeal(doc: Record<string, unknown>): Meal {
 
 async function refreshPhotoUrls(meals: Meal[]) {
   const fileIDs = meals
+    .filter((meal) => !meal.photoUrl)
     .map((meal) => meal.photoFileId)
     .filter((fileID): fileID is string => Boolean(fileID));
   if (fileIDs.length === 0) return meals;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { type Meal, TAG_META, WHO_META } from "@/lib/mock-data";
 import { WhoDots } from "./WhoDots";
 import { PhotoSlot } from "./PhotoSlot";
@@ -24,6 +25,8 @@ export function MealCard({
   const isHer = meal.who === "her";
   const isTogether = meal.who === "together";
   const meta = WHO_META[meal.who];
+  const [failedPhotoUrl, setFailedPhotoUrl] = useState<string | null>(null);
+  const showPhoto = Boolean(meal.photoUrl && failedPhotoUrl !== meal.photoUrl);
 
   return (
     <div
@@ -91,15 +94,18 @@ export function MealCard({
       </div>
 
       {/* 照片：有真实 url 就显示图，否则走斜纹纸占位 */}
-      {meal.photoUrl ? (
+      {showPhoto ? (
         <div className="relative my-3 h-40 rounded-[10px] overflow-hidden border border-divider/60">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={meal.photoUrl}
             alt={meal.dish}
+            onError={() => setFailedPhotoUrl(meal.photoUrl ?? null)}
             className="absolute inset-0 w-full h-full object-cover"
           />
         </div>
+      ) : meal.photoUrl ? (
+        <PhotoSlot caption="照片暂时打不开" />
       ) : meal.photo ? (
         <PhotoSlot caption={meal.photo} />
       ) : null}
