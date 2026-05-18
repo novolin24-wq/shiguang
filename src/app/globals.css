@@ -5,6 +5,11 @@
    source of truth: design/shiguang-demo.html
    ───────────────────────────────────────────── */
 :root {
+  /* 字体 · 使用系统栈，避免部署构建期依赖 Google Fonts 下载 */
+  --font-noto-serif-sc: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  --font-noto-sans-sc: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-cormorant: Georgia, "Times New Roman", serif;
+
   /* 背景 */
   --bg: #F5EFE4;
   --bg-card: #FDFAF3;
