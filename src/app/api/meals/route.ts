@@ -49,6 +49,7 @@ function docToMeal(doc: Record<string, unknown>): Meal {
     photo: doc.photo as string | undefined,
     photoFileId: (doc.photoFileId ?? doc.photoFileID) as string | undefined,
     photoUrl: doc.photoUrl as string | undefined,
+    userId: doc.userId as string | undefined,
   };
 }
 
@@ -82,12 +83,20 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const limit = Number(url.searchParams.get("limit") ?? 50);
     const day = url.searchParams.get("day");
+    const userIds = url.searchParams.getAll("userId").filter(Boolean);
+    if (userIds.length === 0) return NextResponse.json({ meals: [] });
+
     const d = await db();
+    const command = d.command;
 
     const collection = d.collection("meals");
+    const where = {
+      userId: command.in(userIds),
+      ...(day ? { day } : {}),
+    };
     const query = day
-      ? collection.where({ day }).orderBy("time", "desc")
-      : collection.orderBy("day", "desc").orderBy("time", "desc");
+      ? collection.where(where).orderBy("time", "desc")
+      : collection.where(where).orderBy("day", "desc").orderBy("time", "desc");
     const res = await query.limit(Number.isFinite(limit) ? limit : 50).get();
 
     const meals = (res.data as Record<string, unknown>[]).map(docToMeal);
@@ -104,6 +113,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const meal = (await request.json()) as Omit<Meal, "id">;
+    if (!meal.userId) {
+      return NextResponse.json({ error: "缺少 userId" }, { status: 400 });
+    }
+
     const d = await db();
     const res = await d.collection("meals").add({
       ...meal,

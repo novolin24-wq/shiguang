@@ -38,6 +38,8 @@ export interface Meal {
   photoFileId?: string;
   /** 真实照片 ObjectURL（来自记录 modal 上传的图） */
   photoUrl?: string;
+  /** 记录者 uid，手机号登录后用于过滤自己和绑定伙伴的餐食 */
+  userId?: string;
 }
 
 // 「记一顿」中模拟 AI 识别的菜名 · 用户在 modal 里看到的默认值
