@@ -48,18 +48,26 @@ function FnRow({ label, value, locked, dot }: FnRowProps) {
   );
 }
 
-const ROWS: FnRowProps[] = [
-  { label: "关系绑定", value: "小雨", dot: true },
-  { label: "提醒设置", value: "一年前的今天 · 开" },
-  { label: "年度食物报告", value: "等 11 月再来打开", locked: true },
-  { label: "导出我们的记录", value: "PDF · 相册" },
-  { label: "关于食光", value: "" },
-];
+function maskPhone(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length >= 11) {
+    return digits.slice(0, 3) + "****" + digits.slice(-4);
+  }
+  return phone || "已绑定";
+}
 
-export function FuncList() {
+export function FuncList({ partnerPhone }: { partnerPhone?: string }) {
+  const rows: FnRowProps[] = [
+    { label: "关系绑定", value: partnerPhone ? maskPhone(partnerPhone) : "未绑定", dot: !!partnerPhone },
+    { label: "提醒设置", value: "一年前的今天 · 开" },
+    { label: "年度食物报告", value: "等 11 月再来打开", locked: true },
+    { label: "导出我们的记录", value: "PDF · 相册" },
+    { label: "关于食光", value: "" },
+  ];
+
   return (
     <div className="bg-bg-card rounded-lg px-4 shadow-soft">
-      {ROWS.map((r) => (
+      {rows.map((r) => (
         <FnRow key={r.label} {...r} />
       ))}
     </div>

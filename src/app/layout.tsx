@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Noto_Sans_SC, Noto_Serif_SC } from "next/font/google";
+import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
 
 const notoSerifSC = Noto_Serif_SC({
@@ -46,7 +47,9 @@ export default function RootLayout({
       lang="zh-CN"
       className={`${notoSerifSC.variable} ${notoSansSC.variable} ${cormorant.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

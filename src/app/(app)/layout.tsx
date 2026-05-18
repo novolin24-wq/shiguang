@@ -1,3 +1,4 @@
+import { AuthGate } from "@/components/AuthGate";
 import { PageHeader } from "@/components/timeline/PageHeader";
 import { BottomNav } from "@/components/timeline/BottomNav";
 import { RecordModal } from "@/components/timeline/RecordModal";
@@ -12,6 +13,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
+    <AuthGate>
     <TimelineProvider>
       <div className="min-h-screen w-full bg-stage flex items-center justify-center md:py-8">
         <div
@@ -43,5 +45,6 @@ export default function AppLayout({
         </div>
       </div>
     </TimelineProvider>
+    </AuthGate>
   );
 }
