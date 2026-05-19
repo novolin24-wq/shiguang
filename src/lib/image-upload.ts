@@ -1,8 +1,8 @@
 export const IMAGE_UPLOAD_LIMITS = {
   maxOriginalBytes: 12 * 1024 * 1024,
-  maxUploadBytes: 4 * 1024 * 1024,
-  targetBytes: 2 * 1024 * 1024,
-  maxEdge: 1600,
+  maxUploadBytes: 1.5 * 1024 * 1024,
+  targetBytes: 800 * 1024,
+  maxEdge: 1280,
   previewMaxEdge: 720,
   previewQuality: 0.68,
   minQuality: 0.55 as number,

@@ -11,7 +11,12 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { MEALS, TODAY, type Meal } from "@/lib/mock-data";
-import { addMealToDB, deleteMealFromDB, getMeals } from "@/lib/db";
+import {
+  addMealToDB,
+  deleteMealFromDB,
+  getMeals,
+  updateMealInDB,
+} from "@/lib/db";
 import { uploadMealPhoto } from "@/lib/storage";
 import { createMealPhotoDisplayUrl } from "@/lib/image-upload";
 
@@ -130,18 +135,11 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
 
       showToast("正在记入云端…", 2800);
 
-      // 后台异步：上传照片 → 写入数据库 → 用真实数据替换临时记录
+      // 后台异步：先写数据库，再尽力补照片，避免 Storage 超时导致整条记录丢失。
       (async () => {
         try {
           let photoUrl = input.photoUrl;
           let photoFileId = input.photoFileId;
-
-          // 有原始 File 则上传
-          if (input.photoFile) {
-            photoUrl = await createMealPhotoDisplayUrl(input.photoFile);
-            const uploaded = await uploadMealPhoto(input.photoFile);
-            photoFileId = uploaded.fileID;
-          }
 
           const dbId = await addMealToDB({
             day,
@@ -156,13 +154,29 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
             photoUrl,
           });
 
-          // 用数据库返回的真实 ID 替换临时 ID
           setMeals((prev) =>
             prev.map((m) =>
               m.id === tempId ? { ...m, id: dbId, photoFileId, photoUrl } : m,
             ),
           );
           showToast("已记入云端");
+
+          if (!input.photoFile) return;
+
+          try {
+            photoUrl = await createMealPhotoDisplayUrl(input.photoFile);
+            const uploaded = await uploadMealPhoto(input.photoFile);
+            photoFileId = uploaded.fileID;
+            await updateMealInDB(dbId, { photoFileId, photoUrl });
+            setMeals((prev) =>
+              prev.map((m) =>
+                m.id === dbId ? { ...m, photoFileId, photoUrl } : m,
+              ),
+            );
+          } catch (photoError) {
+            console.error("CloudBase photo upload failed", photoError);
+            showToast("文字已保存，照片稍后再补", 4200);
+          }
         } catch (error) {
           console.error("CloudBase save failed", error);
           showToast(getCloudbaseToast(error), 4200);

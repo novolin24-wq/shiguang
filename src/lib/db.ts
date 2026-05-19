@@ -86,3 +86,19 @@ export async function deleteMealFromDB(id: string): Promise<void> {
   });
   if (!res.ok) throw await readError(res, "删除失败");
 }
+
+/** 更新自己的一顿饭 */
+export async function updateMealInDB(
+  id: string,
+  patch: Pick<Meal, "photoFileId" | "photoUrl">,
+): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("请先登录后再更新");
+
+  const res = await fetch("/api/meals", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, userId: user.uid, ...patch }),
+  });
+  if (!res.ok) throw await readError(res, "更新失败");
+}

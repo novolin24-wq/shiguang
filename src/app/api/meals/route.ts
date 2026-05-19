@@ -134,6 +134,44 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PATCH(request: Request) {
+  try {
+    const data = (await request.json()) as Partial<Meal> & {
+      id?: string;
+      userId?: string;
+    };
+    if (!data.id || !data.userId) {
+      return NextResponse.json({ error: "缺少更新参数" }, { status: 400 });
+    }
+
+    const d = await db();
+    const collection = d.collection("meals");
+    const existing = await collection.doc(data.id).get();
+    const doc = existing.data?.[0] as { userId?: string } | undefined;
+    if (!doc) {
+      return NextResponse.json({ error: "记录不存在" }, { status: 404 });
+    }
+    if (doc.userId !== data.userId) {
+      return NextResponse.json({ error: "只能更新自己的记录" }, { status: 403 });
+    }
+
+    const update: Partial<Meal> & { updatedAt: number } = {
+      updatedAt: Date.now(),
+    };
+    if (data.photoFileId !== undefined) update.photoFileId = data.photoFileId;
+    if (data.photoUrl !== undefined) update.photoUrl = data.photoUrl;
+
+    await collection.doc(data.id).update(update);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Meal update failed", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "更新失败" },
+      { status: 500 },
+    );
+  }
+}
+
 export async function DELETE(request: Request) {
   try {
     const url = new URL(request.url);
