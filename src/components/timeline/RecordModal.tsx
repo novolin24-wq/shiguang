@@ -13,6 +13,7 @@ import {
   type Who,
   WHO_META,
 } from "@/lib/mock-data";
+import { prepareMealPhotoForUpload } from "@/lib/image-upload";
 import { useTimeline } from "./TimelineProvider";
 
 type Stage = 1 | 2 | 3;
@@ -232,7 +233,8 @@ function fileToBase64(file: File): Promise<string> {
 async function recognizeDish(file: File): Promise<string | null> {
   let timeout: number | undefined;
   try {
-    const image = await fileToBase64(file);
+    const uploadReadyFile = await prepareMealPhotoForUpload(file);
+    const image = await fileToBase64(uploadReadyFile);
     const controller = new AbortController();
     timeout = window.setTimeout(() => controller.abort(), 5000);
 

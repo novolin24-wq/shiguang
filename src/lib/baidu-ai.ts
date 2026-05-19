@@ -1,6 +1,8 @@
 interface BaiduTokenResponse {
   access_token?: string;
   expires_in?: number;
+  error?: string;
+  error_description?: string;
 }
 
 interface BaiduDishResponse {
@@ -8,6 +10,8 @@ interface BaiduDishResponse {
     name?: string;
     probability?: number | string;
   }[];
+  error_code?: number;
+  error_msg?: string;
 }
 
 let cachedToken: {
@@ -44,10 +48,16 @@ export async function getAccessToken(): Promise<string> {
     },
     body: params,
   });
-  if (!res.ok) throw new Error("百度 AI token 获取失败");
+  if (!res.ok) throw new Error(`百度 AI token 获取失败: ${res.status}`);
 
   const data = (await res.json()) as BaiduTokenResponse;
-  if (!data.access_token) throw new Error("百度 AI token 响应异常");
+  if (!data.access_token) {
+    throw new Error(
+      `百度 AI token 响应异常: ${data.error ?? "unknown"} ${
+        data.error_description ?? ""
+      }`,
+    );
+  }
 
   const expiresIn = data.expires_in ?? 0;
   cachedToken = {
@@ -82,11 +92,25 @@ export async function recognizeFood(
     if (!res.ok) return null;
 
     const data = (await res.json()) as BaiduDishResponse;
+    if (data.error_code) {
+      console.warn("Baidu dish API returned error", {
+        errorCode: data.error_code,
+        errorMessage: data.error_msg,
+      });
+      return null;
+    }
+
     const top = data.result?.[0];
     const name = top?.name?.trim();
     const probability = Number(top?.probability ?? 0);
 
-    if (!name || probability < 0.3) return null;
+    if (!name || probability < 0.3) {
+      console.info("Baidu dish API returned low-confidence result", {
+        name,
+        probability,
+      });
+      return null;
+    }
     return name;
   } catch (error) {
     console.error("Baidu food recognition failed", error);
