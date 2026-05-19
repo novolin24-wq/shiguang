@@ -113,6 +113,11 @@ export async function recognizeFood(
       });
       return null;
     }
+
+    console.info("Baidu dish API accepted result", {
+      name,
+      probability,
+    });
     return name;
   } catch (error) {
     console.error("Baidu food recognition failed", error);

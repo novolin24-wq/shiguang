@@ -245,7 +245,7 @@ async function recognizeDish(file: File): Promise<string | null> {
     const uploadReadyFile = await prepareMealPhotoForUpload(file);
     const image = await fileToBase64(uploadReadyFile);
     const controller = new AbortController();
-    timeout = window.setTimeout(() => controller.abort(), 5000);
+    timeout = window.setTimeout(() => controller.abort(), 15000);
 
     const res = await fetch("/api/recognize", {
       method: "POST",
