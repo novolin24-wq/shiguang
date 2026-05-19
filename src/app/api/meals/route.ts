@@ -133,3 +133,34 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const url = new URL(request.url);
+    const id = url.searchParams.get("id");
+    const userId = url.searchParams.get("userId");
+    if (!id || !userId) {
+      return NextResponse.json({ error: "缺少删除参数" }, { status: 400 });
+    }
+
+    const d = await db();
+    const collection = d.collection("meals");
+    const existing = await collection.doc(id).get();
+    const doc = existing.data?.[0] as { userId?: string } | undefined;
+    if (!doc) {
+      return NextResponse.json({ ok: true });
+    }
+    if (doc.userId !== userId) {
+      return NextResponse.json({ error: "只能删除自己的记录" }, { status: 403 });
+    }
+
+    await collection.doc(id).remove();
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Meal delete failed", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "删除失败" },
+      { status: 500 },
+    );
+  }
+}

@@ -26,6 +26,15 @@ const WHO_OPTIONS: { who: Who; label: string }[] = [
   { who: "colleague", label: "同事" },
 ];
 
+const PLACE_OPTIONS = [
+  "家 · 自己做",
+  "家 · 美团",
+  "店里吃",
+  "公司附近",
+  "路上",
+  "朋友家",
+];
+
 function nowHHmm() {
   const d = new Date();
   return (
@@ -279,10 +288,9 @@ function StageConfirm({
   const metaChips = useMemo(
     () => [
       { k: "时", v: form.time },
-      { k: "处", v: form.place },
       { k: "餐", v: form.meal },
     ],
-    [form.time, form.place, form.meal],
+    [form.time, form.meal],
   );
 
   return (
@@ -341,6 +349,32 @@ function StageConfirm({
             {c.v}
           </span>
         ))}
+      </div>
+
+      <div className="mt-5">
+        <div className="font-serif italic text-[12px] text-ink-faded mb-2 tracking-wider">
+          在哪儿
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {PLACE_OPTIONS.map((place) => {
+            const selected = form.place === place;
+            return (
+              <button
+                key={place}
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, place }))}
+                className={[
+                  "inline-flex items-center px-3 py-1.5 rounded-full text-[12px] border transition",
+                  selected
+                    ? "bg-accent-paper border-accent text-accent"
+                    : "bg-bg-card border-divider text-ink-soft hover:border-ink-faded",
+                ].join(" ")}
+              >
+                {place}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* 和谁一起 */}

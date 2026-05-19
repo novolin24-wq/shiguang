@@ -71,3 +71,18 @@ export async function getMealsByDate(date: string): Promise<Meal[]> {
   const data = (await res.json()) as { meals: Meal[] };
   return data.meals;
 }
+
+/** 删除自己的一顿饭 */
+export async function deleteMealFromDB(id: string): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("请先登录后再删除");
+
+  const search = new URLSearchParams({
+    id,
+    userId: user.uid,
+  });
+  const res = await fetch(`/api/meals?${search.toString()}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw await readError(res, "删除失败");
+}

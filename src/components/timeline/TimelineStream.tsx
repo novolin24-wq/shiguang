@@ -15,7 +15,7 @@ interface Props {
 }
 
 export function TimelineStream({ memory }: Props) {
-  const { meals, highlightedId, scrollNonce } = useTimeline();
+  const { meals, highlightedId, scrollNonce, deleteMeal } = useTimeline();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [memorySeed, setMemorySeed] = useState(0);
 
@@ -53,6 +53,7 @@ export function TimelineStream({ memory }: Props) {
                 meal={m}
                 expanded={expandedId === m.id}
                 highlighted={highlightedId === m.id}
+                onDelete={deleteMeal}
                 onToggle={(e) => {
                   e.stopPropagation();
                   setExpandedId(expandedId === m.id ? null : m.id);

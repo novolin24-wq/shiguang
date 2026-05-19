@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { MEALS, TODAY, type Meal } from "@/lib/mock-data";
-import { addMealToDB, getMeals } from "@/lib/db";
+import { addMealToDB, deleteMealFromDB, getMeals } from "@/lib/db";
 import { uploadMealPhoto } from "@/lib/storage";
 import { createMealPhotoDisplayUrl } from "@/lib/image-upload";
 
@@ -29,6 +29,7 @@ interface TimelineCtx {
   addMeal: (
     input: Omit<Meal, "id" | "day"> & { day?: string; photoFile?: File },
   ) => void;
+  deleteMeal: (meal: Meal) => void;
 }
 
 const Ctx = createContext<TimelineCtx | null>(null);
@@ -172,6 +173,22 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
     [pathname, router, showToast],
   );
 
+  const deleteMeal = useCallback<TimelineCtx["deleteMeal"]>(
+    (meal) => {
+      setMeals((prev) => prev.filter((m) => m.id !== meal.id));
+      showToast("已删除");
+
+      if (meal.id.startsWith("new-")) return;
+
+      void deleteMealFromDB(meal.id).catch((error) => {
+        console.error("CloudBase delete failed", error);
+        setMeals((prev) => [meal, ...prev]);
+        showToast("云端删除失败，请稍后再试", 3600);
+      });
+    },
+    [showToast],
+  );
+
   const value = useMemo<TimelineCtx>(
     () => ({
       meals,
@@ -183,6 +200,7 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
       openRecord,
       closeRecord,
       addMeal,
+      deleteMeal,
     }),
     [
       meals,
@@ -194,6 +212,7 @@ export function TimelineProvider({ children }: { children: React.ReactNode }) {
       openRecord,
       closeRecord,
       addMeal,
+      deleteMeal,
     ],
   );
 

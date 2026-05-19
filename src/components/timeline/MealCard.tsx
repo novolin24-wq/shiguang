@@ -10,6 +10,7 @@ interface MealCardProps {
   expanded: boolean;
   highlighted?: boolean;
   onToggle: (e: React.MouseEvent) => void;
+  onDelete: (meal: Meal) => void;
 }
 
 // 三种主要视觉变体：
@@ -21,6 +22,7 @@ export function MealCard({
   expanded,
   highlighted,
   onToggle,
+  onDelete,
 }: MealCardProps) {
   const isHer = meal.who === "her";
   const isTogether = meal.who === "together";
@@ -173,7 +175,10 @@ export function MealCard({
           <span className="w-px h-3 bg-divider" />
           <button
             type="button"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(meal);
+            }}
             className="hover:text-accent transition ml-auto"
             style={{ color: "var(--accent)" }}
           >

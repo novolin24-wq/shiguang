@@ -44,8 +44,8 @@ export interface Meal {
 
 // 「记一顿」中模拟 AI 识别的菜名 · 用户在 modal 里看到的默认值
 export const MOCK_AI_DISH = "番茄牛腩饭";
-// 「记一顿」三个 meta chip 里的"当前地点" · 写死
-export const MOCK_CURRENT_PLACE = "家 · 美团";
+// 「记一顿」默认地点来源
+export const MOCK_CURRENT_PLACE = "家 · 自己做";
 
 // 根据时间推断餐次
 export function inferMealType(time: string): "早餐" | "午餐" | "晚餐" | "宵夜" {
