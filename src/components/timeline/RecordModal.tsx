@@ -8,7 +8,6 @@ import {
   useState,
 } from "react";
 import {
-  MOCK_AI_DISH,
   MOCK_CURRENT_PLACE,
   inferMealType,
   type Who,
@@ -216,16 +215,58 @@ interface ConfirmForm {
   noteOpen: boolean;
 }
 
+type RecognitionStatus = "success" | "miss";
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      resolve(result.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, ""));
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function recognizeDish(file: File): Promise<string | null> {
+  let timeout: number | undefined;
+  try {
+    const image = await fileToBase64(file);
+    const controller = new AbortController();
+    timeout = window.setTimeout(() => controller.abort(), 5000);
+
+    const res = await fetch("/api/recognize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      return null;
+    }
+
+    const data = (await res.json()) as { name: string | null };
+    return data.name;
+  } catch {
+    return null;
+  } finally {
+    if (timeout) window.clearTimeout(timeout);
+  }
+}
+
 function StageConfirm({
   photoUrl,
   form,
   setForm,
   onDone,
+  recognitionStatus,
 }: {
   photoUrl: string;
   form: ConfirmForm;
   setForm: React.Dispatch<React.SetStateAction<ConfirmForm>>;
   onDone: () => void;
+  recognitionStatus: RecognitionStatus;
 }) {
   const noteRef = useRef<HTMLTextAreaElement>(null);
 
@@ -262,20 +303,27 @@ function StageConfirm({
         <input
           type="text"
           value={form.dish}
+          placeholder={
+            recognitionStatus === "miss"
+              ? "我看不太清，你来告诉我？"
+              : undefined
+          }
           onChange={(e) =>
             setForm((f) => ({ ...f, dish: e.target.value }))
           }
           className="w-full font-serif text-[22px] text-ink bg-transparent border-b border-divider pb-1.5 pr-20 focus:outline-none focus:border-accent-soft transition-colors"
         />
-        <span
-          className="absolute right-0 bottom-2 text-[10px] tracking-[0.1em] px-1.5 py-0.5 rounded-md font-medium"
-          style={{
-            background: "var(--accent-paper)",
-            color: "var(--accent)",
-          }}
-        >
-          AI 已识别
-        </span>
+        {recognitionStatus === "success" && (
+          <span
+            className="absolute right-0 bottom-2 text-[10px] tracking-[0.1em] px-1.5 py-0.5 rounded-md font-medium"
+            style={{
+              background: "var(--accent-paper)",
+              color: "var(--accent)",
+            }}
+          >
+            AI 已识别
+          </span>
+        )}
       </div>
 
       {/* 三 meta chip */}
@@ -388,6 +436,8 @@ function RecordModalInner() {
   const [stage, setStage] = useState<Stage>(1);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [recognitionStatus, setRecognitionStatus] =
+    useState<RecognitionStatus>("miss");
   const [form, setForm] = useState<ConfirmForm>(() => {
     const t = nowHHmm();
     return {
@@ -422,19 +472,25 @@ function RecordModalInner() {
     const url = URL.createObjectURL(file);
     setPhotoUrl(url);
     setPhotoFile(file);
+    setRecognitionStatus("miss");
     setStage(2);
-    // 模拟 AI 识别 2 秒
-    setTimeout(() => {
-      setForm((f) => ({ ...f, dish: f.dish || MOCK_AI_DISH }));
+
+    void recognizeDish(file).then((dish) => {
+      if (dish) {
+        setForm((f) => ({ ...f, dish: f.dish || dish }));
+        setRecognitionStatus("success");
+      } else {
+        setRecognitionStatus("miss");
+      }
       setStage(3);
-    }, 2000);
+    });
   }, []);
 
   const onDone = useCallback(() => {
     addMeal({
       time: form.time,
       who: form.who,
-      dish: form.dish || MOCK_AI_DISH,
+      dish: form.dish.trim() || "一顿饭",
       place: form.place,
       note: form.note.trim() || undefined,
       photoUrl: photoUrl ?? undefined,
@@ -473,6 +529,7 @@ function RecordModalInner() {
               form={form}
               setForm={setForm}
               onDone={onDone}
+              recognitionStatus={recognitionStatus}
             />
           )}
         </div>
