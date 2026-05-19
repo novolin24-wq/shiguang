@@ -19,6 +19,8 @@ let cachedToken: {
   expiresAt: number;
 } | null = null;
 
+const MIN_DISH_PROBABILITY = 0.2;
+
 function getCredentials() {
   const apiKey = process.env.BAIDU_API_KEY;
   const secretKey = process.env.BAIDU_SECRET_KEY;
@@ -104,7 +106,7 @@ export async function recognizeFood(
     const name = top?.name?.trim();
     const probability = Number(top?.probability ?? 0);
 
-    if (!name || probability < 0.3) {
+    if (!name || probability < MIN_DISH_PROBABILITY) {
       console.info("Baidu dish API returned low-confidence result", {
         name,
         probability,
